@@ -28,8 +28,9 @@
 
 # Executables
 *.exe
-*.out
+out/
 *.app
 
 # IDE files
 *.vs 
+CMakePresets.json
