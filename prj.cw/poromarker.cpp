@@ -7,8 +7,6 @@
 #include<imgui_stdlib.h>
 #include<GLFW/glfw3.h>
 #include<GLFW/glfw3native.h>
-#include<gl/GL.h>
-#include<gl/GLU.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -151,7 +149,8 @@ int main(){
                         // Обработка команды "Open"
                     }
                     if (ImGui::MenuItem("Save")) {
-                        // Обработка команды "Save"
+                        show_start_window = true;
+                        show_project_window = false;
                     }
                     ImGui::EndMenu();
                 }
