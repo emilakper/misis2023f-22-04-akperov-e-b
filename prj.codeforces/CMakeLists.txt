@@ -1,0 +1,8 @@
+add_executable (0020b "0020b.cpp")
+add_executable (0197b "0197b.cpp")
+add_executable (0549c "0549c.cpp")
+add_executable (0569a "0569a.cpp")
+add_executable (1208a "1208a.cpp")
+add_executable (1359d "1359d.cpp")
+add_executable (1772e "1772e.cpp")
+add_executable (1872d "1872d.cpp")

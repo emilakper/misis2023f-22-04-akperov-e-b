@@ -16,3 +16,4 @@ find_package(imgui CONFIG REQUIRED)
 
 
 add_subdirectory(prj.cw)
+add_subdirectory(prj.codeforces)
