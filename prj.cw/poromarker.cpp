@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include<glad/glad.h>
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
@@ -7,38 +8,8 @@
 #include<imgui_stdlib.h>
 #include<GLFW/glfw3.h>
 #include<GLFW/glfw3native.h>
+#include<opencv2/opencv.hpp>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
-{
-    // Load from file
-    int image_width = 0;
-    int image_height = 0;
-    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
-    if (image_data == NULL)
-        return false;
-
-    // Create a OpenGL texture identifier
-    GLuint image_texture;
-    glGenTextures(1, &image_texture);
-    glBindTexture(GL_TEXTURE_2D, image_texture);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Upload pixels into texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);
-
-    *out_texture = image_texture;
-    *out_width = image_width;
-    *out_height = image_height;
-
-    return true;
-}
 
 static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -75,7 +46,7 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);         
 #endif
 
-    
+
     GLFWwindow* window = glfwCreateWindow(1280, 720, "PoroMarker", nullptr, nullptr);
     if (window == nullptr)
         return 1;
@@ -96,6 +67,16 @@ int main(){
     // Our state
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    cv::Mat image1 = cv::imread("C:/Users/ASUS/Downloads/poro_marker_logo(1).png", cv::IMREAD_COLOR);
+    cv::Mat image;
+    cv::cvtColor(image1, image, cv::COLOR_BGR2RGB);
+    //create textures
+    GLuint imageTexture;
+    glGenTextures(1, &imageTexture);
+    glBindTexture(GL_TEXTURE_2D, imageTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.size().width, image.size().height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.data);
+
     // Main loop
     while (!glfwWindowShouldClose(window)){
         // Poll and handle events (inputs, window resize, etc.)
@@ -110,12 +91,10 @@ int main(){
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
         if (show_start_window)// StartMenu
         {
-            int my_image_width = 0;
-            int my_image_height = 0;
-            GLuint my_image_texture = 0;
-            bool ret = LoadTextureFromFile("C:\\Users\\ASUS\\Downloads\\poro_marker_logo(1).png", &my_image_texture, &my_image_width, &my_image_height);
             ImVec2 size(200, 338);
             ImGui::SetNextWindowSize(size, ImGuiCond_Once);
             ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x - size.x) * 0.5f, (ImGui::GetIO().DisplaySize.y - size.y) * 0.5f));
@@ -133,7 +112,9 @@ int main(){
             if (ImGui::Button("Help")){
                 // Обработка нажатия кнопки "Help"
             }
-            ImGui::Image((void*)(intptr_t)my_image_texture, ImVec2(my_image_width, my_image_height));
+            // demo opencv pic
+            ImGui::Image((void*)(intptr_t)imageTexture, ImVec2(image.size().width, image.size().height));
+
             ImGui::End();
         }
         
