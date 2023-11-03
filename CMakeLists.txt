@@ -14,7 +14,6 @@ endif()
 
 find_package(imgui CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(glad CONFIG REQUIRED)
 
 add_subdirectory(prj.cw)
 add_subdirectory(prj.codeforces)

@@ -1,5 +1,4 @@
 ﻿#include <iostream>
-#include<glad/glad.h>
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
@@ -75,7 +74,7 @@ int main(){
     glGenTextures(1, &imageTexture);
     glBindTexture(GL_TEXTURE_2D, imageTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.size().width, image.size().height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.data);
+    glTexImage2D(GL_TEXTURE_2D, 0, 0x1907, image.size().width, image.size().height, 0, 0x1907, GL_UNSIGNED_BYTE, image.data);
 
     // Main loop
     while (!glfwWindowShouldClose(window)){
