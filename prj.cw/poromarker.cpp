@@ -8,17 +8,25 @@
 #include<GLFW/glfw3.h>
 #include<GLFW/glfw3native.h>
 #include<opencv2/opencv.hpp>
+#include<imfilebrowser/imfilebrowser.h>
 
 
 static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+GLuint convertMatToTexture(const cv::Mat& image) {
+    cv::Mat imageRGB;
+    cv::cvtColor(image, imageRGB, cv::COLOR_BGR2RGB);
+    GLuint imageTexture;
+    glGenTextures(1, &imageTexture);
+    glBindTexture(GL_TEXTURE_2D, imageTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, 0x1907, imageRGB.size().width, imageRGB.size().height, 0, 0x1907, GL_UNSIGNED_BYTE, imageRGB.data);
+    return imageTexture;
+}
+
 int main(){
-
-    bool show_start_window = true;
-    bool show_project_window = false;
-
     // Test
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
@@ -45,7 +53,6 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);         
 #endif
 
-
     GLFWwindow* window = glfwCreateWindow(1280, 720, "PoroMarker", nullptr, nullptr);
     if (window == nullptr)
         return 1;
@@ -56,33 +63,23 @@ int main(){
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    // Our state
+    bool show_start_window = true;
+    bool show_project_window = false;
+    ImGui::FileBrowser fileDialog;
+    fileDialog.SetTitle("Choose folder or file");
+    fileDialog.SetTypeFilters({ ".png" });
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    cv::Mat image1 = cv::imread("C:/Users/ASUS/Downloads/poro_marker_logo(1).png", cv::IMREAD_COLOR);
-    cv::Mat image;
-    cv::cvtColor(image1, image, cv::COLOR_BGR2RGB);
-    //create textures
-    GLuint imageTexture;
-    glGenTextures(1, &imageTexture);
-    glBindTexture(GL_TEXTURE_2D, imageTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, 0x1907, image.size().width, image.size().height, 0, 0x1907, GL_UNSIGNED_BYTE, image.data);
+    cv::Mat image = cv::imread("C:/Users/ASUS/Downloads/poro_marker_logo(1).png", cv::IMREAD_COLOR);
+    GLuint imageTexture = convertMatToTexture(image);
 
     // Main loop
     while (!glfwWindowShouldClose(window)){
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
 
         // Start the Dear ImGui frame
@@ -111,9 +108,7 @@ int main(){
             if (ImGui::Button("Help")){
                 // Обработка нажатия кнопки "Help"
             }
-            // demo opencv pic
             ImGui::Image((void*)(intptr_t)imageTexture, ImVec2(image.size().width, image.size().height));
-
             ImGui::End();
         }
         
@@ -126,7 +121,7 @@ int main(){
             if (ImGui::BeginMainMenuBar()) {
                 if (ImGui::BeginMenu("File")) {
                     if (ImGui::MenuItem("Open")) {
-                        // Обработка команды "Open"
+                        fileDialog.Open();
                     }
                     if (ImGui::MenuItem("Save")) {
                         show_start_window = true;
@@ -147,6 +142,13 @@ int main(){
                 ImGui::EndMainMenuBar();
             }
             ImGui::End();
+        }
+
+        fileDialog.Display();
+        if (fileDialog.HasSelected())
+        {
+            std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
+            fileDialog.ClearSelected();
         }
 
         // Rendering
