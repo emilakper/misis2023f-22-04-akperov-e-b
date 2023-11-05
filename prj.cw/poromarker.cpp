@@ -53,7 +53,7 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);         
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "PoroMarker", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "PoroMarker", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
@@ -71,9 +71,11 @@ int main(){
 
     bool show_start_window = true;
     bool show_project_window = false;
-    ImGui::FileBrowser fileDialog;
-    fileDialog.SetTitle("Choose folder or file");
-    fileDialog.SetTypeFilters({ ".png" });
+    ImGui::FileBrowser dirDialog(ImGuiFileBrowserFlags_SelectDirectory | ImGuiFileBrowserFlags_MultipleSelection | ImGuiFileBrowserFlags_MultipleSelection | ImGuiFileBrowserFlags_CloseOnEsc);
+    dirDialog.SetTitle("Choose folder");
+    ImGui::FileBrowser fileDialog(ImGuiFileBrowserFlags_MultipleSelection | ImGuiFileBrowserFlags_CloseOnEsc);
+    fileDialog.SetTitle("Choose files");
+    fileDialog.SetTypeFilters({ ".png",".tif" });
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     cv::Mat image = cv::imread("C:/Users/ASUS/Downloads/poro_marker_logo(1).png", cv::IMREAD_COLOR);
     GLuint imageTexture = convertMatToTexture(image);
@@ -89,12 +91,16 @@ int main(){
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        
         if (show_start_window)// StartMenu
         {
-            ImVec2 size(200, 338);
+            ImVec2 size(200, 334);
             ImGui::SetNextWindowSize(size, ImGuiCond_Once);
             ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x - size.x) * 0.5f, (ImGui::GetIO().DisplaySize.y - size.y) * 0.5f));
             ImGui::Begin("Welcome to PoroMarker",nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+            ImGui::SetWindowFontScale(1.0f*(ImGui::GetIO().DisplaySize.y / 1080));
+
             ImGui::Text("Choose an option.");
             ImGui::NewLine();
             if (ImGui::Button("Create project")){
@@ -120,7 +126,10 @@ int main(){
 
             if (ImGui::BeginMainMenuBar()) {
                 if (ImGui::BeginMenu("File")) {
-                    if (ImGui::MenuItem("Open")) {
+                    if (ImGui::MenuItem("Open folder")) {
+                        dirDialog.Open();
+                    }
+                    if (ImGui::MenuItem("Open files")) {
                         fileDialog.Open();
                     }
                     if (ImGui::MenuItem("Save")) {
@@ -143,11 +152,25 @@ int main(){
             }
             ImGui::End();
         }
+        
+        dirDialog.Display();
+        if (dirDialog.HasSelected())
+        {
+            std::vector<std::filesystem::path> selectedFiles = dirDialog.GetMultiSelected();
 
+            for (const auto& path : selectedFiles) {
+                std::cout << "Selected filename: " << path.string() << std::endl;
+            }
+            dirDialog.ClearSelected();
+        }
         fileDialog.Display();
         if (fileDialog.HasSelected())
         {
-            std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
+            std::vector<std::filesystem::path> selectedFiles = fileDialog.GetMultiSelected();
+
+            for (const auto& path : selectedFiles) {
+                std::cout << "Selected filename: " << path.string() << std::endl;
+            }
             fileDialog.ClearSelected();
         }
 
