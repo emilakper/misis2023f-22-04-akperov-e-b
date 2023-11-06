@@ -119,12 +119,13 @@ int main(){
         }
         
         if (show_project_window) {
-            ImVec2 size(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y-18);
+            ImVec2 size(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
             ImGui::SetNextWindowSize(size, ImGuiCond_Once);
             ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x - size.x) * 0.5f, (ImGui::GetIO().DisplaySize.y - size.y)));
-            ImGui::Begin("Project", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+            ImGui::Begin("Project", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse 
+                                            | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar);
 
-            if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenuBar()) {
                 if (ImGui::BeginMenu("File")) {
                     if (ImGui::MenuItem("Open folder")) {
                         dirDialog.Open();
@@ -148,7 +149,29 @@ int main(){
                     ImGui::EndMenu();
                 }
 
-                ImGui::EndMainMenuBar();
+                // Полоска с кнопками
+                ImGui::Separator();
+
+                if (ImGui::Button("Scissors", ImVec2(80, 0))) {
+                    // Обработка нажатия кнопки "Ножницы"
+                }
+                ImGui::SameLine();
+
+                if (ImGui::Button("Rectangle", ImVec2(80, 0))) {
+                    // Обработка нажатия кнопки "Прямоугольник"
+                }
+
+                if (ImGui::Button("Erase", ImVec2(80, 0))) {
+                    // Обработка нажатия кнопки "Удаление"
+                }
+
+                if (ImGui::Button("PolyLine", ImVec2(80, 0))) {
+                    // Обработка нажатия кнопки "Полилиния"
+                }
+                ImGui::EndMenuBar();
+
+
+
             }
             ImGui::End();
         }
