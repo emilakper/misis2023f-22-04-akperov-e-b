@@ -11,6 +11,28 @@
 #include<imfilebrowser/imfilebrowser.h>
 #include <vector>
 
+#ifdef _WIN32
+#include <Windows.h>
+#include <shellapi.h>
+
+void OpenURLInBrowser(const std::string& url) {
+    ShellExecuteA(nullptr, "open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+#elif __APPLE__
+#include <cstdlib>
+
+void OpenURLInBrowser(const std::string& url) {
+    std::string command = "open " + url;
+    system(command.c_str());
+}
+#elif __linux__
+#include <cstdlib>
+
+void OpenURLInBrowser(const std::string& url) {
+    std::string command = "xdg-open " + url;
+    system(command.c_str());
+}
+#endif
 
 static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -28,7 +50,6 @@ GLuint convertMatToTexture(const cv::Mat& image) {
 }
 
 int main(){
-    // Test
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
@@ -70,28 +91,32 @@ int main(){
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    bool show_start_window = true;
-    bool show_project_window = false;
-    ImGui::FileBrowser dirDialog(ImGuiFileBrowserFlags_SelectDirectory | ImGuiFileBrowserFlags_MultipleSelection | ImGuiFileBrowserFlags_MultipleSelection | ImGuiFileBrowserFlags_CloseOnEsc);
+    // Variables and Constructor Calls
+    bool show_start_window = true; // Startup Window
+    bool show_project_window = false; // Project Window
+    std::string url = "https://github.com/emilakper/poromarker";
+
+    ImGui::FileBrowser dirDialog(ImGuiFileBrowserFlags_SelectDirectory | ImGuiFileBrowserFlags_MultipleSelection | 
+                                            ImGuiFileBrowserFlags_MultipleSelection | ImGuiFileBrowserFlags_CloseOnEsc);
     dirDialog.SetTitle("Choose folder");
     ImGui::FileBrowser fileDialog(ImGuiFileBrowserFlags_MultipleSelection | ImGuiFileBrowserFlags_CloseOnEsc);
     fileDialog.SetTitle("Choose files");
     fileDialog.SetTypeFilters({ ".png",".tif" });
+
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     cv::Mat image = cv::imread("C:/Users/ASUS/Downloads/poro_marker_logo(1).png", cv::IMREAD_COLOR);
     GLuint imageTexture = convertMatToTexture(image);
 
-    int layerNumber = 0;
-    int lastLayerNumber = 0;
     // Temorary Solution For testing functions, cv::Mat of layers would be given by teammate 
     std::vector<cv::Mat> layerImages;
-    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/0.png", cv::IMREAD_COLOR));
-    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/1.png", cv::IMREAD_COLOR));
-    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/2.png", cv::IMREAD_COLOR));
-    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/3.png", cv::IMREAD_COLOR));
+    int layerNumber = 0;
+    int lastLayerNumber = 0;
+
+    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/example.png", cv::IMREAD_COLOR));
     auto itr = layerImages.begin();
     int itrEnd = layerImages.size()-1;
     GLuint imageLayerTexture = convertMatToTexture(*itr);
+
     // Main loop
     while (!glfwWindowShouldClose(window)){
         glfwPollEvents();
@@ -124,7 +149,7 @@ int main(){
                 // Обработка нажатия кнопки "Open project"
             }
             if (ImGui::Button("Help")){
-                // Обработка нажатия кнопки "Help"
+                OpenURLInBrowser(url);
             }
             ImGui::Image((void*)(intptr_t)imageTexture, ImVec2(image.size().width, image.size().height));
             ImGui::End();
@@ -138,7 +163,7 @@ int main(){
                                             | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar);
 
             if (ImGui::BeginMenuBar()) {
-                if (ImGui::BeginMenu("File")) {
+                if (ImGui::BeginMenu("Project")) {
                     if (ImGui::MenuItem("Open folder")) {
                         dirDialog.Open();
                     }
@@ -146,39 +171,39 @@ int main(){
                         fileDialog.Open();
                     }
                     if (ImGui::MenuItem("Save")) {
+                        // Saving function
+                    }
+                    if (ImGui::MenuItem("Exit")) {
                         show_start_window = true;
                         show_project_window = false;
                     }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Help")) {
-                    if (ImGui::MenuItem("Docs")) {
-                        // Обработка команды "Документация"
-                    }
-                    if (ImGui::MenuItem("About us")) {
-                        // Обработка команды "О нас"
+                    if (ImGui::MenuItem("Short User Guide")) {
+                        OpenURLInBrowser(url);
                     }
                     ImGui::EndMenu();
                 }
 
-                // Полоска с кнопками
+                // Instruments Buttons
                 ImGui::Separator();
 
                 if (ImGui::Button("Scissors", ImVec2(80, 0))) {
-                    // Обработка нажатия кнопки "Ножницы"
+                    // Scissors function
                 }
                 ImGui::SameLine();
 
                 if (ImGui::Button("Rectangle", ImVec2(80, 0))) {
-                    // Обработка нажатия кнопки "Прямоугольник"
+                    // Rectangle Function
                 }
 
                 if (ImGui::Button("Erase", ImVec2(80, 0))) {
-                    // Обработка нажатия кнопки "Удаление"
+                    // Erase function
                 }
 
                 if (ImGui::Button("PolyLine", ImVec2(80, 0))) {
-                    // Обработка нажатия кнопки "Полилиния"
+                    // PolyLine function
                 }
                 ImGui::EndMenuBar();
             }
@@ -217,10 +242,15 @@ int main(){
         if (fileDialog.HasSelected())
         {
             std::vector<std::filesystem::path> selectedFiles = fileDialog.GetMultiSelected();
-
+            layerImages.clear();
             for (const auto& path : selectedFiles) {
-                std::cout << "Selected filename: " << path.string() << std::endl;
+                std::string strPath = path.string();
+                std::replace(strPath.begin(), strPath.end(), '/', '\\');
+                layerImages.push_back(cv::imread(strPath, cv::IMREAD_COLOR));
             }
+            itr = layerImages.begin();
+            itrEnd = layerImages.size() - 1;
+            imageLayerTexture = convertMatToTexture(*itr);
             fileDialog.ClearSelected();
         }
 
