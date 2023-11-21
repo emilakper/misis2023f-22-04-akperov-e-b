@@ -9,6 +9,7 @@
 #include<GLFW/glfw3native.h>
 #include<opencv2/opencv.hpp>
 #include<imfilebrowser/imfilebrowser.h>
+#include <vector>
 
 
 static void glfw_error_callback(int error, const char* description){
@@ -80,6 +81,17 @@ int main(){
     cv::Mat image = cv::imread("C:/Users/ASUS/Downloads/poro_marker_logo(1).png", cv::IMREAD_COLOR);
     GLuint imageTexture = convertMatToTexture(image);
 
+    int layerNumber = 0;
+    int lastLayerNumber = 0;
+    // Temorary Solution For testing functions, cv::Mat of layers would be given by teammate 
+    std::vector<cv::Mat> layerImages;
+    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/0.png", cv::IMREAD_COLOR));
+    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/1.png", cv::IMREAD_COLOR));
+    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/2.png", cv::IMREAD_COLOR));
+    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/3.png", cv::IMREAD_COLOR));
+    auto itr = layerImages.begin();
+    int itrEnd = layerImages.size()-1;
+    GLuint imageLayerTexture = convertMatToTexture(*itr);
     // Main loop
     while (!glfwWindowShouldClose(window)){
         glfwPollEvents();
@@ -169,9 +181,24 @@ int main(){
                     // Обработка нажатия кнопки "Полилиния"
                 }
                 ImGui::EndMenuBar();
+            }
 
-
-
+            ImGui::SetCursorPos(ImVec2(150,25));
+            ImGui::Image((void*)(intptr_t)imageLayerTexture, ImVec2(975, 975));
+            ImGui::SliderInt("Layer number", &layerNumber, 0, itrEnd,"");
+            ImGui::SetNextItemWidth(100);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 600.0f);
+            ImGui::InputInt(" ", &layerNumber);
+            if (layerNumber < 0) {
+                layerNumber = 0;
+            }
+            else if (layerNumber > itrEnd) {
+                layerNumber = itrEnd;
+            }
+            if (layerNumber != lastLayerNumber) {
+                lastLayerNumber = layerNumber;
+                glDeleteTextures(1, &imageLayerTexture);
+                imageLayerTexture = convertMatToTexture(*(itr+layerNumber));
             }
             ImGui::End();
         }
