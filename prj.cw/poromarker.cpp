@@ -111,11 +111,15 @@ int main(){
     std::vector<cv::Mat> layerImages;
     int layerNumber = 0;
     int lastLayerNumber = 0;
+    bool maskOn = false;
 
     layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/example.png", cv::IMREAD_COLOR));
     auto itr = layerImages.begin();
     int itrEnd = layerImages.size()-1;
     GLuint imageLayerTexture = convertMatToTexture(*itr);
+
+    cv::Mat maskExamplePic = cv::imread("C:/Users/ASUS/Downloads/pics/maskexample.png", cv::IMREAD_COLOR);
+    GLuint maskExample = convertMatToTexture(maskExamplePic);
 
     // Main loop
     while (!glfwWindowShouldClose(window)){
@@ -209,11 +213,29 @@ int main(){
             }
 
             ImGui::SetCursorPos(ImVec2(150,25));
-            ImGui::Image((void*)(intptr_t)imageLayerTexture, ImVec2(975, 975));
+            ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+            if (!maskOn) {
+                ImGui::Image((void*)(intptr_t)imageLayerTexture, ImVec2(975, 975));
+            }
+            else {
+                ImVec2 p0 = ImGui::GetCursorScreenPos();
+                ImVec2 p1 = ImVec2(p0.x + 975, p0.y + 975);
+                ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 0.55f); 
+                drawList->AddImage((void*)(intptr_t)imageLayerTexture, p0, p1, ImVec2(0, 0), ImVec2(1, 1), ImColor(tint));
+
+                p0 = ImGui::GetCursorScreenPos();
+                p1 = ImVec2(p0.x + 975, p0.y + 975);
+                tint = ImVec4(1.0f, 1.0f, 1.0f, 0.7f); 
+                drawList->AddImage((void*)(intptr_t)maskExample, p0, p1, ImVec2(0, 0), ImVec2(1, 1), ImColor(tint));
+            }
+            ImGui::SetCursorPos(ImVec2(0, 1000));
             ImGui::SliderInt("Layer number", &layerNumber, 0, itrEnd,"");
             ImGui::SetNextItemWidth(100);
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 600.0f);
             ImGui::InputInt(" ", &layerNumber);
+            ImGui::SameLine();
+            ImGui::Checkbox("Mask On", &maskOn);
             if (layerNumber < 0) {
                 layerNumber = 0;
             }
