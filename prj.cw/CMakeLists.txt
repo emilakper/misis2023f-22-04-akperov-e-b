@@ -1,5 +1,5 @@
 ﻿add_subdirectory(libs)
 
-add_executable (poromarker "poromarker.cpp" "poromarker.h")
+add_executable (poromarker "poromarker.cpp")
 target_link_libraries(poromarker PRIVATE imgui::imgui opencv_core opencv_highgui opencv_imgproc imfilebrowser)
 

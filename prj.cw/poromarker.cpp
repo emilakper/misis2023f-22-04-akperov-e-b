@@ -10,6 +10,7 @@
 #include<opencv2/opencv.hpp>
 #include<imfilebrowser/imfilebrowser.h>
 #include <vector>
+#include <filesystem>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -38,6 +39,7 @@ static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+
 GLuint convertMatToTexture(const cv::Mat& image) {
     cv::Mat imageRGB;
     cv::cvtColor(image, imageRGB, cv::COLOR_BGR2RGB);
@@ -53,7 +55,6 @@ int main(){
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
-
     // Decide GL+GLSL versions
 #if defined(IMGUI_IMPL_OPENGL_ES2)
     // GL ES 2.0 + GLSL 100
@@ -85,6 +86,7 @@ int main(){
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.FontGlobalScale = 1.5f;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     ImGui::StyleColorsDark();
 
@@ -103,8 +105,10 @@ int main(){
     fileDialog.SetTitle("Choose files");
     fileDialog.SetTypeFilters({ ".png",".tif" });
 
+    std::string picsPath = std::filesystem::path(__FILE__).parent_path().string() + "/pics/";
+    std::replace(picsPath.begin(), picsPath.end(), '/', '\\');
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    cv::Mat image = cv::imread("C:/Users/ASUS/Downloads/poro_marker_logo(1).png", cv::IMREAD_COLOR);
+    cv::Mat image = cv::imread(picsPath + "logo.png", cv::IMREAD_COLOR);
     GLuint imageTexture = convertMatToTexture(image);
 
     // Temorary Solution For testing functions, cv::Mat of layers would be given by teammate 
@@ -113,12 +117,12 @@ int main(){
     int lastLayerNumber = 0;
     bool maskOn = false;
 
-    layerImages.push_back(cv::imread("C:/Users/ASUS/Downloads/pics/example.png", cv::IMREAD_COLOR));
+    layerImages.push_back(cv::imread(picsPath + "nolayerpic.png", cv::IMREAD_COLOR));
     auto itr = layerImages.begin();
     int itrEnd = layerImages.size()-1;
     GLuint imageLayerTexture = convertMatToTexture(*itr);
 
-    cv::Mat maskExamplePic = cv::imread("C:/Users/ASUS/Downloads/pics/maskexample.png", cv::IMREAD_COLOR);
+    cv::Mat maskExamplePic = cv::imread(picsPath + "maskexample.png", cv::IMREAD_COLOR);
     GLuint maskExample = convertMatToTexture(maskExamplePic);
 
     // Main loop
@@ -135,7 +139,7 @@ int main(){
         
         if (show_start_window)// StartMenu
         {
-            ImVec2 size(200, 334);
+            ImVec2 size(230, 375);
             ImGui::SetNextWindowSize(size, ImGuiCond_Once);
             ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x - size.x) * 0.5f, (ImGui::GetIO().DisplaySize.y - size.y) * 0.5f));
             ImGui::Begin("Welcome to PoroMarker",nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
@@ -193,20 +197,20 @@ int main(){
                 // Instruments Buttons
                 ImGui::Separator();
 
-                if (ImGui::Button("Scissors", ImVec2(80, 0))) {
+                if (ImGui::Button("Scissors", ImVec2(160, 0))) {
                     // Scissors function
                 }
                 ImGui::SameLine();
 
-                if (ImGui::Button("Rectangle", ImVec2(80, 0))) {
+                if (ImGui::Button("Rectangle", ImVec2(160, 0))) {
                     // Rectangle Function
                 }
 
-                if (ImGui::Button("Erase", ImVec2(80, 0))) {
+                if (ImGui::Button("Erase", ImVec2(160, 0))) {
                     // Erase function
                 }
 
-                if (ImGui::Button("PolyLine", ImVec2(80, 0))) {
+                if (ImGui::Button("PolyLine", ImVec2(160, 0))) {
                     // PolyLine function
                 }
                 ImGui::EndMenuBar();
@@ -216,26 +220,36 @@ int main(){
             ImDrawList* drawList = ImGui::GetWindowDrawList();
 
             if (!maskOn) {
-                ImGui::Image((void*)(intptr_t)imageLayerTexture, ImVec2(975, 975));
+                ImGui::Image((void*)(intptr_t)imageLayerTexture, ImVec2(965, 965));
             }
             else {
                 ImVec2 p0 = ImGui::GetCursorScreenPos();
-                ImVec2 p1 = ImVec2(p0.x + 975, p0.y + 975);
+                ImVec2 p1 = ImVec2(p0.x + 965, p0.y + 965);
                 ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 0.55f); 
                 drawList->AddImage((void*)(intptr_t)imageLayerTexture, p0, p1, ImVec2(0, 0), ImVec2(1, 1), ImColor(tint));
 
                 p0 = ImGui::GetCursorScreenPos();
-                p1 = ImVec2(p0.x + 975, p0.y + 975);
+                p1 = ImVec2(p0.x + 965, p0.y + 965);
                 tint = ImVec4(1.0f, 1.0f, 1.0f, 0.7f); 
                 drawList->AddImage((void*)(intptr_t)maskExample, p0, p1, ImVec2(0, 0), ImVec2(1, 1), ImColor(tint));
             }
-            ImGui::SetCursorPos(ImVec2(0, 1000));
+            ImGui::SetCursorPos(ImVec2(0, 990));
             ImGui::SliderInt("Layer number", &layerNumber, 0, itrEnd,"");
             ImGui::SetNextItemWidth(100);
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 600.0f);
-            ImGui::InputInt(" ", &layerNumber);
+            ImGui::InputInt(" ", &layerNumber,1, 100, ImGuiInputTextFlags_EnterReturnsTrue);
             ImGui::SameLine();
             ImGui::Checkbox("Mask On", &maskOn);
+            ImGui::SetCursorPosY(400.0f);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Button("Hello!");
+
+            if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey::ImGuiKey_KeypadAdd))) {
+                layerNumber++;
+            }
+            if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey::ImGuiKey_KeypadSubtract))) {
+                layerNumber--;
+            }
             if (layerNumber < 0) {
                 layerNumber = 0;
             }
@@ -253,10 +267,10 @@ int main(){
         dirDialog.Display();
         if (dirDialog.HasSelected())
         {
-            std::vector<std::filesystem::path> selectedFiles = dirDialog.GetMultiSelected();
+            std::vector<std::filesystem::path> selectedDir = dirDialog.GetMultiSelected();
 
-            for (const auto& path : selectedFiles) {
-                std::cout << "Selected filename: " << path.string() << std::endl;
+            for (const auto& path : selectedDir) {
+                std::cout << "Selected directory: " << path.string() << std::endl;
             }
             dirDialog.ClearSelected();
         }
