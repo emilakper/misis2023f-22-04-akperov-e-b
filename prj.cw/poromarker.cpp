@@ -125,6 +125,12 @@ int main(){
     cv::Mat maskExamplePic = cv::imread(picsPath + "maskexample.png", cv::IMREAD_COLOR);
     GLuint maskExample = convertMatToTexture(maskExamplePic);
 
+    float oriTrans = 0.55f;
+    float maskTrans = 0.9f;
+
+    const char* filters[] = { "MeanStd", "DenoiseNLM" };
+    static int currentItem = 0;
+
     // Main loop
     while (!glfwWindowShouldClose(window)){
         glfwPollEvents();
@@ -225,12 +231,12 @@ int main(){
             else {
                 ImVec2 p0 = ImGui::GetCursorScreenPos();
                 ImVec2 p1 = ImVec2(p0.x + 965, p0.y + 965);
-                ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 0.55f); 
+                ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, oriTrans); 
                 drawList->AddImage((void*)(intptr_t)imageLayerTexture, p0, p1, ImVec2(0, 0), ImVec2(1, 1), ImColor(tint));
 
                 p0 = ImGui::GetCursorScreenPos();
                 p1 = ImVec2(p0.x + 965, p0.y + 965);
-                tint = ImVec4(1.0f, 1.0f, 1.0f, 0.7f); 
+                tint = ImVec4(1.0f, 1.0f, 1.0f, maskTrans); 
                 drawList->AddImage((void*)(intptr_t)maskExample, p0, p1, ImVec2(0, 0), ImVec2(1, 1), ImColor(tint));
             }
             ImGui::SetCursorPos(ImVec2(0, 990));
@@ -240,7 +246,40 @@ int main(){
             ImGui::InputInt(" ", &layerNumber,1, 100, ImGuiInputTextFlags_EnterReturnsTrue);
             ImGui::SameLine();
             ImGui::Checkbox("Mask On", &maskOn);
-            ImGui::SetCursorPosY(400.0f);
+            if (maskOn) {
+                ImGui::PushItemWidth(150);
+                ImGui::SameLine();
+                ImGui::InputFloat("Layer Transparency", &oriTrans, 0.01f, 1.0f, "%.2f");
+                ImGui::SameLine();
+                ImGui::InputFloat("Mask Transparency", &maskTrans, 0.01f, 1.0f, "%.2f");
+                ImGui::PopItemWidth();
+                if (oriTrans < 0.0) {
+                    oriTrans = 0.0;
+                }
+                else if (oriTrans > 1.0) {
+                    oriTrans = 1.0;
+                }
+                if (maskTrans < 0.0) {
+                    maskTrans = 0.0;
+                }
+                else if (maskTrans > 1.0) {
+                    maskTrans = 1.0;
+                }
+            }
+            ImGui::SetCursorPosY(100.0f);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::PushItemWidth(150);
+            if (ImGui::Combo("##combo", &currentItem, filters, IM_ARRAYSIZE(filters))) {
+                // Здесь можно обработать изменение выбранного значения
+                // например, currentItem содержит индекс выбранного элемента
+            }
+            ImGui::PopItemWidth();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Button("Hello!");
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Button("Hello!");
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Button("Hello!");
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::Button("Hello!");
 
