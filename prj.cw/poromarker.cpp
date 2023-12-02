@@ -142,6 +142,10 @@ int main(){
 
     bool mode = false;
     std::string errorMessage;
+
+    cv::Mat parampic = cv::imread(picsPath + "parampic.png", cv::IMREAD_COLOR);
+    GLuint paramTexture = convertMatToTexture(parampic);
+
     // Main loop
     while (!glfwWindowShouldClose(window)){
         glfwPollEvents();
@@ -280,6 +284,8 @@ int main(){
             ImGui::SetCursorPosY(100.0f);
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::PushItemWidth(150);
+            ImGui::Text("Filter Type: ");
+            ImGui::SameLine();
             ImGui::Combo("##combo", &currentFilter, filters, IM_ARRAYSIZE(filters));
             if (currentFilter != 2) {
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
@@ -315,8 +321,10 @@ int main(){
             else if (ksize % 2 == 0) {
                 ksize = ksize + 1;
             }
-
+            ImGui::NewLine();
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Text("Threshold Type: ");
+            ImGui::SameLine();
             ImGui::Combo("##combo2", &currentThreshold, thresholds, IM_ARRAYSIZE(thresholds));
             if (currentThreshold == 2) {
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
@@ -344,6 +352,7 @@ int main(){
 
             ImGui::PopItemWidth();
 
+            ImGui::NewLine();
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::Checkbox("Lungs analysis mode", &mode);
 
@@ -364,6 +373,17 @@ int main(){
             ImGui::PopItemWidth();
             ImGui::PopStyleColor();
 
+            ImGui::NewLine();
+            ImGui::NewLine();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Text("Original picture:");
+            ImGui::SameLine(1550);
+            ImGui::Text("After segmentation:");
+            ImGui::NewLine();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Image((void*)(intptr_t)paramTexture, ImVec2(300, 300));
+            ImGui::SameLine(1550.f);
+            ImGui::Image((void*)(intptr_t)paramTexture, ImVec2(300, 300));
 
             if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey::ImGuiKey_KeypadAdd))) {
                 layerNumber++;
