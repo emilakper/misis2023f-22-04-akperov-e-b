@@ -11,6 +11,7 @@
 #include<imfilebrowser/imfilebrowser.h>
 #include <vector>
 #include <filesystem>
+#include <stdexcept>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -96,6 +97,7 @@ int main(){
     // Variables and Constructor Calls
     bool show_start_window = true; // Startup Window
     bool show_project_window = false; // Project Window
+    bool showErrorPopup = false;
     std::string url = "https://github.com/emilakper/poromarker";
 
     ImGui::FileBrowser dirDialog(ImGuiFileBrowserFlags_SelectDirectory | ImGuiFileBrowserFlags_MultipleSelection | 
@@ -128,9 +130,18 @@ int main(){
     float oriTrans = 0.55f;
     float maskTrans = 0.9f;
 
-    const char* filters[] = { "MeanStd", "DenoiseNLM" };
-    static int currentItem = 0;
+    const char* filters[] = { "BILATERAL", "NLM", "None"};
+    int currentFilter = 0;
+    int bdc = 0;
+    int filterIterations = 2;
+    int filterhParam = 10;
+    int ksize = 5;
+    int threshold = 128;
+    const char* thresholds[] = { "BINARY", "OTSU", "MEAN_STD_DEV", "KAPUR"};
+    int currentThreshold = 0;
 
+    bool mode = false;
+    std::string errorMessage;
     // Main loop
     while (!glfwWindowShouldClose(window)){
         glfwPollEvents();
@@ -269,19 +280,90 @@ int main(){
             ImGui::SetCursorPosY(100.0f);
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::PushItemWidth(150);
-            if (ImGui::Combo("##combo", &currentItem, filters, IM_ARRAYSIZE(filters))) {
-                // Здесь можно обработать изменение выбранного значения
-                // например, currentItem содержит индекс выбранного элемента
+            ImGui::Combo("##combo", &currentFilter, filters, IM_ARRAYSIZE(filters));
+            if (currentFilter != 2) {
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+                ImGui::InputInt("filterIterations", &filterIterations, 1, 5);
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+                ImGui::InputInt("ksize", &ksize, 1, 30);
+                if (currentFilter == 1) {
+                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+                    ImGui::InputInt("filterhParam", &filterhParam, 1, 100);
+                }
+            }
+
+            if (filterIterations < 1) {
+                filterIterations = 1;
+            }
+            else if (filterIterations > 5) {
+                filterIterations = 5;
+            }
+
+            if (filterhParam < 5) {
+                filterhParam = 5;
+            }
+            else if (filterhParam > 100) {
+                filterhParam = 100;
+            }
+
+            if (ksize < 0) {
+                ksize = 1;
+            }
+            else if (ksize > 29) {
+                ksize = 29;
+            }
+            else if (ksize % 2 == 0) {
+                ksize = ksize + 1;
+            }
+
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Combo("##combo2", &currentThreshold, thresholds, IM_ARRAYSIZE(thresholds));
+            if (currentThreshold == 2) {
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+                ImGui::InputInt("bdc", &bdc, 1, 3);
+            }
+
+            if (currentThreshold == 0) {
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+                ImGui::InputInt("threshold", &threshold, 0, 255);
+            }
+
+            if (threshold < 0) {
+                threshold = 0;
+            }
+            else if (threshold > 255) {
+                threshold = 255;
+            }
+
+            if (bdc < 0) {
+                bdc = 0;
+            }
+            else if (bdc > 3) {
+                bdc = 3;
+            }
+
+            ImGui::PopItemWidth();
+
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::Checkbox("Lungs analysis mode", &mode);
+
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.8f, 1.0f));
+            ImGui::PushItemWidth(150);
+            if (ImGui::Button("Semi-Automatic Marking")) {
+                // Logic
+            }
+            ImGui::PopStyleColor();
+
+            ImGui::SameLine();
+
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));
+            if (ImGui::Button("Analysis")) {
+                // Logic
             }
             ImGui::PopItemWidth();
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
-            ImGui::Button("Hello!");
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
-            ImGui::Button("Hello!");
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
-            ImGui::Button("Hello!");
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
-            ImGui::Button("Hello!");
+            ImGui::PopStyleColor();
+
 
             if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey::ImGuiKey_KeypadAdd))) {
                 layerNumber++;
@@ -321,12 +403,44 @@ int main(){
             for (const auto& path : selectedFiles) {
                 std::string strPath = path.string();
                 std::replace(strPath.begin(), strPath.end(), '/', '\\');
-                layerImages.push_back(cv::imread(strPath, cv::IMREAD_COLOR));
+                try {
+                    cv::Mat image = cv::imread(strPath, cv::IMREAD_COLOR);
+                    if (image.empty()) {
+                        throw std::runtime_error("Failed to load image from file: " + strPath);
+                    }
+                    layerImages.push_back(image);
+                }
+                catch (const std::exception& e) {
+                    errorMessage = e.what();
+                    showErrorPopup = true;
+                }
             }
-            itr = layerImages.begin();
-            itrEnd = layerImages.size() - 1;
-            imageLayerTexture = convertMatToTexture(*itr);
+            if (!layerImages.empty()) {
+                itr = layerImages.begin();
+                itrEnd = layerImages.size() - 1;
+                imageLayerTexture = convertMatToTexture(*itr);
+            }
+            else {
+                layerImages.push_back(cv::imread(picsPath + "nolayerpic.png", cv::IMREAD_COLOR));
+                itr = layerImages.begin();
+                itrEnd = layerImages.size() - 1;
+                imageLayerTexture = convertMatToTexture(*itr);
+            }
             fileDialog.ClearSelected();
+        }
+
+        if (showErrorPopup) {
+            ImGui::OpenPopup("Error");
+            if (ImGui::BeginPopupModal("Error", &showErrorPopup, ImGuiWindowFlags_AlwaysAutoResize)) {
+                ImGui::SetNextWindowSize(ImVec2(400, 0));
+                ImGui::Text("An error occurred!");
+                ImGui::TextWrapped(errorMessage.c_str());
+                if (ImGui::Button("OK", ImVec2(120, 0))) {
+                    showErrorPopup = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
         }
 
         // Rendering
