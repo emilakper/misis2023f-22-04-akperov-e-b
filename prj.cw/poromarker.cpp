@@ -291,7 +291,7 @@ int main(){
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
                 ImGui::InputInt("filterIterations", &filterIterations, 1, 5);
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
-                ImGui::InputInt("ksize", &ksize, 1, 30);
+                ImGui::InputInt("ksize", &ksize, 0, 0);
                 if (currentFilter == 1) {
                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
                     ImGui::InputInt("filterhParam", &filterhParam, 1, 100);
