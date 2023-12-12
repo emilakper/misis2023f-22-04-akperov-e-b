@@ -40,7 +40,6 @@ static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-
 GLuint convertMatToTexture(const cv::Mat& image) {
     cv::Mat imageRGB;
     cv::cvtColor(image, imageRGB, cv::COLOR_BGR2RGB);
@@ -95,11 +94,14 @@ int main(){
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Variables and Constructor Calls
-    bool show_start_window = true; // Startup Window
-    bool show_project_window = false; // Project Window
-    bool showErrorPopup = false;
-    std::string url = "https://github.com/emilakper/poromarker";
+    bool showStartWindow = true; // Startup Window
+    bool showProjectWindow = false; // Project Window
+    bool showErrorPopup = false; // Error Window 
+    bool showDummyWindow = false; // Dummy Window
 
+    std::string url = "https://github.com/emilakper/poromarker"; // URL for Help
+
+    // Dialogues
     ImGui::FileBrowser dirDialog(ImGuiFileBrowserFlags_SelectDirectory | ImGuiFileBrowserFlags_MultipleSelection | 
                                             ImGuiFileBrowserFlags_MultipleSelection | ImGuiFileBrowserFlags_CloseOnEsc);
     dirDialog.SetTitle("Choose folder");
@@ -107,13 +109,14 @@ int main(){
     fileDialog.SetTitle("Choose files");
     fileDialog.SetTypeFilters({ ".png",".tif" });
 
+    // Some default pictures for demonstration
     std::string picsPath = std::filesystem::path(__FILE__).parent_path().string() + "/pics/";
     std::replace(picsPath.begin(), picsPath.end(), '/', '\\');
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     cv::Mat image = cv::imread(picsPath + "logo.png", cv::IMREAD_COLOR);
     GLuint imageTexture = convertMatToTexture(image);
 
-    // Temorary Solution For testing functions, cv::Mat of layers would be given by teammate 
+    // Temorary Solution for reading Layers
     std::vector<cv::Mat> layerImages;
     int layerNumber = 0;
     int lastLayerNumber = 0;
@@ -127,6 +130,7 @@ int main(){
     cv::Mat maskExamplePic = cv::imread(picsPath + "maskexample.png", cv::IMREAD_COLOR);
     GLuint maskExample = convertMatToTexture(maskExamplePic);
 
+    // Varibles for app settings
     float oriTrans = 0.55f;
     float maskTrans = 0.9f;
 
@@ -158,7 +162,7 @@ int main(){
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        if (show_start_window)// StartMenu
+        if (showStartWindow)
         {
             ImVec2 size(230, 375);
             ImGui::SetNextWindowSize(size, ImGuiCond_Once);
@@ -170,12 +174,11 @@ int main(){
             ImGui::Text("Choose an option.");
             ImGui::NewLine();
             if (ImGui::Button("Create project")){
-                // Обработка нажатия кнопки "Create project"
-                show_start_window = false;
-                show_project_window = true;
+                showStartWindow = false;
+                showProjectWindow = true;
             }
             if (ImGui::Button("Open project")){
-                // Обработка нажатия кнопки "Open project"
+                showDummyWindow = true;
             }
             if (ImGui::Button("Help")){
                 OpenURLInBrowser(url);
@@ -184,7 +187,7 @@ int main(){
             ImGui::End();
         }
         
-        if (show_project_window) {
+        if (showProjectWindow) {
             ImVec2 size(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
             ImGui::SetNextWindowSize(size, ImGuiCond_Once);
             ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x - size.x) * 0.5f, (ImGui::GetIO().DisplaySize.y - size.y)));
@@ -200,11 +203,12 @@ int main(){
                         fileDialog.Open();
                     }
                     if (ImGui::MenuItem("Save")) {
+                        showDummyWindow = true;
                         // Saving function
                     }
                     if (ImGui::MenuItem("Exit")) {
-                        show_start_window = true;
-                        show_project_window = false;
+                        showStartWindow = true;
+                        showProjectWindow = false;
                     }
                     ImGui::EndMenu();
                 }
@@ -219,20 +223,20 @@ int main(){
                 ImGui::Separator();
 
                 if (ImGui::Button("Scissors", ImVec2(160, 0))) {
-                    // Scissors function
+                    showDummyWindow = true;
                 }
                 ImGui::SameLine();
 
                 if (ImGui::Button("Rectangle", ImVec2(160, 0))) {
-                    // Rectangle Function
+                    showDummyWindow = true;
                 }
 
                 if (ImGui::Button("Erase", ImVec2(160, 0))) {
-                    // Erase function
+                    showDummyWindow = true;
                 }
 
                 if (ImGui::Button("PolyLine", ImVec2(160, 0))) {
-                    // PolyLine function
+                    showDummyWindow = true;
                 }
                 ImGui::EndMenuBar();
             }
@@ -361,6 +365,7 @@ int main(){
             ImGui::PushItemWidth(150);
             if (ImGui::Button("Semi-Automatic Marking")) {
                 // Logic
+                showDummyWindow = true;
             }
             ImGui::PopStyleColor();
 
@@ -369,6 +374,7 @@ int main(){
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));
             if (ImGui::Button("Analysis")) {
                 // Logic
+                showDummyWindow = true;
             }
             ImGui::PopItemWidth();
             ImGui::PopStyleColor();
@@ -457,6 +463,19 @@ int main(){
                 ImGui::TextWrapped(errorMessage.c_str());
                 if (ImGui::Button("OK", ImVec2(120, 0))) {
                     showErrorPopup = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+
+        if (showDummyWindow) {
+            ImGui::OpenPopup("Dummy Window");
+            if (ImGui::BeginPopupModal("Dummy Window", &showDummyWindow, ImGuiWindowFlags_AlwaysAutoResize)) {
+                ImGui::SetNextWindowSize(ImVec2(400, 0));
+                ImGui::Text("This button works!");
+                if (ImGui::Button("OK", ImVec2(120, 0))) {
+                    showDummyWindow = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
