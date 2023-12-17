@@ -34,3 +34,4 @@ out/
 # IDE files
 *.vs 
 CMakePresets.json
+/bin*/

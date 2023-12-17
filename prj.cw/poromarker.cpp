@@ -204,7 +204,6 @@ int main(){
                     }
                     if (ImGui::MenuItem("Save")) {
                         showDummyWindow = true;
-                        // Saving function
                     }
                     if (ImGui::MenuItem("Exit")) {
                         showStartWindow = true;
@@ -364,7 +363,6 @@ int main(){
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.8f, 1.0f));
             ImGui::PushItemWidth(150);
             if (ImGui::Button("Semi-Automatic Marking")) {
-                // Logic
                 showDummyWindow = true;
             }
             ImGui::PopStyleColor();
@@ -373,7 +371,6 @@ int main(){
 
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));
             if (ImGui::Button("Analysis")) {
-                // Logic
                 showDummyWindow = true;
             }
             ImGui::PopItemWidth();
@@ -419,6 +416,7 @@ int main(){
             for (const auto& path : selectedDir) {
                 std::cout << "Selected directory: " << path.string() << std::endl;
             }
+            showDummyWindow = true;
             dirDialog.ClearSelected();
         }
         fileDialog.Display();
