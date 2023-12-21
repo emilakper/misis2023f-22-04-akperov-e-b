@@ -111,7 +111,9 @@ int main(){
 
     // Some default pictures for demonstration
     std::string picsPath = std::filesystem::path(__FILE__).parent_path().string() + "/pics/";
+#ifdef _WIN32
     std::replace(picsPath.begin(), picsPath.end(), '/', '\\');
+#endif
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     cv::Mat image = cv::imread(picsPath + "logo.png", cv::IMREAD_COLOR);
     GLuint imageTexture = convertMatToTexture(image);
@@ -426,7 +428,9 @@ int main(){
             layerImages.clear();
             for (const auto& path : selectedFiles) {
                 std::string strPath = path.string();
+#ifdef _WIN32
                 std::replace(strPath.begin(), strPath.end(), '/', '\\');
+#endif
                 try {
                     cv::Mat image = cv::imread(strPath, cv::IMREAD_COLOR);
                     if (image.empty()) {
