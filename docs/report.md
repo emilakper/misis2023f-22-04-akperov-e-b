@@ -1,6 +1,6 @@
 # CMake FetchContent()
 
-Модуль FetchContent в CMake - это мощный инструмент для управления зависимостями в вашем проекте. Он позволяет загружать контент из различных источников, таких как tarballs, локальные папки или системы контроля версий (например, Git или SVN) во время настройки, а затем использовать их в вашей системе сборки.
+Модуль FetchContent в CMake - это мощный инструмент для управления зависимостями в вашем проекте. Он позволяет загружать контент из различных источников, например из системы контроля версий (Git, SVN и т.п.) во время настройки, а затем использовать их в вашей системе сборки.
 
 ## Как работает FetchContent
 
@@ -52,6 +52,33 @@ FetchContent_Populate(
 FetchContent_Declare(lexy URL https://lexy.foonathan.net/download/lexy-src.zip)
 FetchContent_MakeAvailable(lexy)
 ```
+
+
+- **Свойства контента**: FetchContent_GetProperties - это функция CMake, которая позволяет получить свойства контента, объявленного с помощью FetchContent_Declare. Это может быть полезно, если вам нужно получить информацию о контенте, например, чтобы проверить, был ли контент уже загружен, или для получения значений свойств контента.
+
+Пример использования FetchContent_GetProperties:
+
+```cmake
+FetchContent_Declare(
+    my_library
+    GIT_REPOSITORY https://github.com/username/my_library.git
+    GIT_TAG v1.2.3
+)
+
+FetchContent_GetProperties(my_library)
+if(NOT my_library_POPULATED)
+    message(STATUS "my_library not found. Fetching...")
+    FetchContent_Populate(my_library)
+endif()
+```
+В этом примере мы объявляем контент my_library для загрузки из репозитория Git. Затем мы используем FetchContent_GetProperties для получения свойств этого контента. Мы проверяем, был ли контент уже загружен, и если нет, то используем FetchContent_Populate для его загрузки.
+
+FetchContent_GetProperties возвращает следующие свойства контента:
+
+- my_library_SOURCE_DIR: Путь к каталогу, в который был загружен контент.
+- my_library_BINARY_DIR: Путь к каталогу сборки для контента.
+- my_library_POPULATED: Булевое значение, указывающее, был ли контент уже загружен.
+
 
 ## Заключение
 
