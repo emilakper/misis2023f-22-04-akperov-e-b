@@ -75,7 +75,6 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);         
 #endif
-
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "PoroMarker", nullptr, nullptr);
     if (window == nullptr)
         return 1;
@@ -355,6 +354,12 @@ int main(){
                 bdc = 3;
             }
 
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.8f, 1.0f));
+            if (ImGui::Button("Try these parameters")) {
+                showDummyWindow = true;
+            }
+            ImGui::PopStyleColor();
             ImGui::PopItemWidth();
 
             ImGui::NewLine();
