@@ -75,7 +75,7 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);         
 #endif
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "PoroMarker", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1920, 1000, "PoroMarker", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
@@ -154,7 +154,6 @@ int main(){
     // Main loop
     while (!glfwWindowShouldClose(window)){
         glfwPollEvents();
-
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -170,7 +169,7 @@ int main(){
             ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x - size.x) * 0.5f, (ImGui::GetIO().DisplaySize.y - size.y) * 0.5f));
             ImGui::Begin("Welcome to PoroMarker",nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
-            ImGui::SetWindowFontScale(1.0f*(ImGui::GetIO().DisplaySize.y / 1080));
+            ImGui::SetWindowFontScale(1.0f*((ImGui::GetIO().DisplaySize.y+1) / 1080));
 
             ImGui::Text("Choose an option.");
             ImGui::NewLine();
@@ -189,8 +188,10 @@ int main(){
         }
         
         if (showProjectWindow) {
-            ImVec2 size(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
-            ImGui::SetNextWindowSize(size, ImGuiCond_Once);
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            ImVec2 size(static_cast<float>(width), static_cast<float>(height));
+            ImGui::SetNextWindowSize(size);
             ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x - size.x) * 0.5f, (ImGui::GetIO().DisplaySize.y - size.y)));
             ImGui::Begin("Project", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse 
                                             | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar);
@@ -222,47 +223,57 @@ int main(){
                 // Instruments Buttons
                 ImGui::Separator();
 
-                if (ImGui::Button("Scissors", ImVec2(160, 0))) {
+                if (ImGui::Button("Scissors", ImVec2(160 * width / 1920, 0))) {
                     showDummyWindow = true;
                 }
                 ImGui::SameLine();
 
-                if (ImGui::Button("Rectangle", ImVec2(160, 0))) {
+                if (ImGui::Button("Rectangle", ImVec2(160 * width / 1920, 0))) {
                     showDummyWindow = true;
                 }
 
-                if (ImGui::Button("Erase", ImVec2(160, 0))) {
+                if (ImGui::Button("Erase", ImVec2(160 * width / 1920, 0))) {
                     showDummyWindow = true;
                 }
 
-                if (ImGui::Button("PolyLine", ImVec2(160, 0))) {
+                if (ImGui::Button("PolyLine", ImVec2(160 * width / 1920, 0))) {
                     showDummyWindow = true;
                 }
                 ImGui::EndMenuBar();
             }
 
-            ImGui::SetCursorPos(ImVec2(150,25));
+            ImGui::Columns(2, "myColumns", false);
+
+            float columnWidth1 = ImGui::GetWindowSize().x * 0.625f; 
+            float columnWidth2 = ImGui::GetWindowSize().x * 0.375f; 
+
+            ImGui::SetColumnWidth(0, columnWidth1);
+            ImGui::SetColumnWidth(1, columnWidth2); 
+
             ImDrawList* drawList = ImGui::GetWindowDrawList();
 
             if (!maskOn) {
-                ImGui::Image((void*)(intptr_t)imageLayerTexture, ImVec2(965, 965));
+                ImGui::Image((void*)(intptr_t)imageLayerTexture, ImVec2(height-100, height-100));
             }
             else {
                 ImVec2 p0 = ImGui::GetCursorScreenPos();
-                ImVec2 p1 = ImVec2(p0.x + 965, p0.y + 965);
-                ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, oriTrans); 
+                ImVec2 p1 = ImVec2(p0.x + height - 100, p0.y + height - 100);
+                ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, oriTrans);
                 drawList->AddImage((void*)(intptr_t)imageLayerTexture, p0, p1, ImVec2(0, 0), ImVec2(1, 1), ImColor(tint));
 
                 p0 = ImGui::GetCursorScreenPos();
-                p1 = ImVec2(p0.x + 965, p0.y + 965);
-                tint = ImVec4(1.0f, 1.0f, 1.0f, maskTrans); 
+                p1 = ImVec2(p0.x + height - 100, p0.y + height - 100);
+                tint = ImVec4(1.0f, 1.0f, 1.0f, maskTrans);
                 drawList->AddImage((void*)(intptr_t)maskExample, p0, p1, ImVec2(0, 0), ImVec2(1, 1), ImColor(tint));
+                ImGui::SetCursorScreenPos(ImVec2(p0.x, p1.y));
             }
-            ImGui::SetCursorPos(ImVec2(0, 990));
-            ImGui::SliderInt("Layer number", &layerNumber, 0, itrEnd,"");
+            ImGui::SliderInt("Layer number", &layerNumber, 0, itrEnd, "");
             ImGui::SetNextItemWidth(100);
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 600.0f);
-            ImGui::InputInt(" ", &layerNumber,1, 100, ImGuiInputTextFlags_EnterReturnsTrue);
+            if (!maskOn)
+                ImGui::SetCursorPosX(columnWidth1 * 0.2);
+            else 
+                ImGui::SetCursorPosX(columnWidth1 * 0.01);
+            ImGui::InputInt(" ", &layerNumber, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue);
             ImGui::SameLine();
             ImGui::Checkbox("Mask On", &maskOn);
             if (maskOn) {
@@ -285,19 +296,15 @@ int main(){
                     maskTrans = 1.0;
                 }
             }
-            ImGui::SetCursorPosY(100.0f);
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
+            ImGui::NextColumn();
             ImGui::PushItemWidth(150);
             ImGui::Text("Filter Type: ");
             ImGui::SameLine();
             ImGui::Combo("##combo", &currentFilter, filters, IM_ARRAYSIZE(filters));
             if (currentFilter != 2) {
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
                 ImGui::InputInt("filterIterations", &filterIterations, 1, 5);
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
                 ImGui::InputInt("ksize", &ksize, 0, 0);
                 if (currentFilter == 1) {
-                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
                     ImGui::InputInt("filterhParam", &filterhParam, 1, 100);
                 }
             }
@@ -326,17 +333,14 @@ int main(){
                 ksize = ksize + 1;
             }
             ImGui::NewLine();
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::Text("Threshold Type: ");
             ImGui::SameLine();
             ImGui::Combo("##combo2", &currentThreshold, thresholds, IM_ARRAYSIZE(thresholds));
             if (currentThreshold == 2) {
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
                 ImGui::InputInt("bdc", &bdc, 1, 3);
             }
 
             if (currentThreshold == 0) {
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
                 ImGui::InputInt("threshold", &threshold, 0, 255);
             }
 
@@ -354,7 +358,6 @@ int main(){
                 bdc = 3;
             }
 
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.8f, 1.0f));
             if (ImGui::Button("Try these parameters")) {
                 showDummyWindow = true;
@@ -363,10 +366,8 @@ int main(){
             ImGui::PopItemWidth();
 
             ImGui::NewLine();
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::Checkbox("Lungs analysis mode", &mode);
 
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.8f, 1.0f));
             ImGui::PushItemWidth(150);
             if (ImGui::Button("Semi-Automatic Marking")) {
@@ -385,15 +386,13 @@ int main(){
 
             ImGui::NewLine();
             ImGui::NewLine();
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
             ImGui::Text("Original picture:");
-            ImGui::SameLine(1550);
+            ImGui::SameLine(350.0f * width / 1920);
             ImGui::Text("After segmentation:");
             ImGui::NewLine();
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 1200.0f);
-            ImGui::Image((void*)(intptr_t)paramTexture, ImVec2(300, 300));
-            ImGui::SameLine(1550.f);
-            ImGui::Image((void*)(intptr_t)paramTexture, ImVec2(300, 300));
+            ImGui::Image((void*)(intptr_t)paramTexture, ImVec2(300 * width / 1920, 300 * width / 1920));
+            ImGui::SameLine(350.0f * width / 1920);
+            ImGui::Image((void*)(intptr_t)paramTexture, ImVec2(300 * width / 1920, 300 * width / 1920));
 
             if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey::ImGuiKey_KeypadAdd))) {
                 layerNumber++;
@@ -410,8 +409,10 @@ int main(){
             if (layerNumber != lastLayerNumber) {
                 lastLayerNumber = layerNumber;
                 glDeleteTextures(1, &imageLayerTexture);
-                imageLayerTexture = convertMatToTexture(*(itr+layerNumber));
+                imageLayerTexture = convertMatToTexture(*(itr + layerNumber));
             }
+
+            ImGui::Columns(1);
             ImGui::End();
         }
         
@@ -419,10 +420,6 @@ int main(){
         if (dirDialog.HasSelected())
         {
             std::vector<std::filesystem::path> selectedDir = dirDialog.GetMultiSelected();
-
-            for (const auto& path : selectedDir) {
-                std::cout << "Selected directory: " << path.string() << std::endl;
-            }
             showDummyWindow = true;
             dirDialog.ClearSelected();
         }
