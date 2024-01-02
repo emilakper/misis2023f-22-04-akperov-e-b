@@ -13,6 +13,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_CURRENT_SOURCE_DIR}/bi
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True) 
 
+find_package(imgui CONFIG REQUIRED)
+find_package(OpenCV REQUIRED)
+
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/install" CACHE PATH "..." FORCE)
 endif()
@@ -23,7 +26,10 @@ if (BUILD_WITH_CODEFORCES)
   add_subdirectory(prj.codeforces)
 endif()
 
-find_package(imgui CONFIG REQUIRED)
-find_package(OpenCV REQUIRED)
+option(BUILD_ONLY_LIBRARY "Build only FileBrowser interface" off)
 
-add_subdirectory(prj.cw)
+if (BUILD_ONLY_LIBRARY)
+  add_subdirectory(prj.cw/libs)
+else()
+  add_subdirectory(prj.cw)
+endif()
